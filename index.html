@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My CDN</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 1100px; margin-inline: auto; }
+    h1 { font-size: 1.4rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    figure { margin: 0; }
+    video, img { width: 100%; border-radius: 8px; background: #000; }
+    figcaption { font-size: .85rem; margin-top: 4px; word-break: break-all; }
+    figcaption a { color: inherit; }
+    .empty { opacity: .6; }
+  </style>
+</head>
+<body>
+  <h1>My CDN</h1>
+  <h2>Videos</h2>
+  <div id="videos" class="grid"></div>
+  <h2>Images</h2>
+  <div id="images" class="grid"></div>
+
+  <script>
+    fetch('manifest.json', { cache: 'no-cache' })
+      .then(r => r.json())
+      .then(m => {
+        render('videos', m.videos, f => {
+          const v = document.createElement('video');
+          v.controls = true; v.preload = 'metadata'; v.playsInline = true;
+          v.src = f;
+          return v;
+        });
+        render('images', m.images, f => {
+          const i = document.createElement('img');
+          i.loading = 'lazy'; i.src = f;
+          return i;
+        });
+      })
+      .catch(() => {
+        document.getElementById('videos').textContent = 'manifest.json을 불러오지 못했습니다. scripts/gen-manifest.sh를 실행하세요.';
+      });
+
+    function render(id, files, make) {
+      const box = document.getElementById(id);
+      if (!files || !files.length) {
+        box.innerHTML = '<p class="empty">파일이 없습니다.</p>';
+        return;
+      }
+      for (const f of files) {
+        const fig = document.createElement('figure');
+        fig.appendChild(make(f));
+        const cap = document.createElement('figcaption');
+        const a = document.createElement('a');
+        a.href = f; a.textContent = f;
+        cap.appendChild(a);
+        fig.appendChild(cap);
+        box.appendChild(fig);
+      }
+    }
+  </script>
+</body>
+</html>
